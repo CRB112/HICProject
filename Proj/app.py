@@ -58,24 +58,30 @@ def search_locations():
     return render_template('location_results.html', locations=filtered_locations)
 
 
-# @app.route('/locations/<int:location_id>')
-# def cars_at_location(location_id):
-#     conn = get_connection()
-#     cur = conn.cursor()
+@app.route('/locations/<int:location_id>')
+def cars_at_location(location_id):
+    conn = get_connection()
+    cur = conn.cursor()
 
-#     # adjust column/table names to your DB
-#     cur.execute("""
-#         SELECT car_id, car_make, car_model, car_year
-#         FROM "Cars"
-#         WHERE location_id = %s;
-#     """, (location_id,))
+    # adjust column/table names to your DB
+    cur.execute("""
+        SELECT car_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status 
+        FROM "Cars"
+        WHERE location_id = %s;
+    """, (location_id,))
 
-#     cars = cur.fetchall()
+    cars = cur.fetchall()
 
-#     cur.close()
-#     conn.close()
+    cur.close()
+    conn.close()
 
-#     return render_template("results.html", cars=cars)
+    carsAtLocation = [
+         {"id": car[0], "make": car[1], "model": car[2], "year": car[3], "rate":car[4], "transmission": car[5],
+           "seats": car[6], "MPG":car[7], "special": car[8], "status": car[9]}
+        for car in cars
+    ]
+
+    return render_template("car_results.html", carsAtLocation=carsAtLocation)                 
 
 if __name__ == '__main__':
     app.run()

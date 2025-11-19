@@ -7,6 +7,8 @@
             {{loc.days_open}} <br>
             {{loc.opens}} - {{loc.closes}}
         </div>
-        <div class="col-6 col-md-6">Available Cars at Location</div>
+        <div class="col-6 col-md-6">
+            <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('cars_at_location', location_id=loc.id) }}">Available Cars At Location</a>
+        </div>
     </div>
 {% endfor %}
