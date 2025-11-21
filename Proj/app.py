@@ -81,7 +81,44 @@ def cars_at_location(location_id):
         for car in cars
     ]
 
-    return render_template("car_results.html", carsAtLocation=carsAtLocation)                 
+    return render_template("cars.html", carsAtLocation=carsAtLocation, location_id=location_id) 
+
+@app.route('/search_cars', methods=['GET'])
+def search_cars():
+    # 1. Get the search term from the AJAX request
+    query = request.args.get('q', '').lower()
+    location_id = request.args.get('location_id')
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # 2. Fetch all data (or just the necessary data for the query)
+    cur.execute("""
+        SELECT car_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status 
+        FROM "Cars"
+        WHERE location_id = %s;
+    """, (location_id,))
+    
+    cars = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    
+    cars = [
+         {"id": car[0], "make": car[1], "model": car[2], "year": car[3], "rate":car[4], "transmission": car[5],
+           "seats": car[6], "MPG":car[7], "special": car[8], "status": car[9]}
+        for car in cars
+    ]
+
+    # 3. Filter the data based on the query (case-insensitive)
+    filtered_cars = [
+        car for car in cars
+        if query in car['model'].lower()
+    ]
+
+    # 4. Render only the partial HTML template with the filtered results
+    # You MUST create a separate template file named 'location_results_partial.html'
+    return render_template('car_results.html', carsAtLocation=filtered_cars)                
 
 if __name__ == '__main__':
     app.run()
