@@ -80,21 +80,58 @@ CREATE TABLE "Reviews" (
 );
 
 
-ALTER TABLE
-    "Reservations" ADD PRIMARY KEY("reservation_id");
-ALTER TABLE
-    "Reservations" ADD CONSTRAINT "reservations_pickup_location_foreign" FOREIGN KEY("pickup_location") REFERENCES "Locations"("location_id");
-ALTER TABLE
-    "Reservations" ADD CONSTRAINT "reservations_payment_id_foreign" FOREIGN KEY("payment_id") REFERENCES "PaymentInfo"("payment_id");
-ALTER TABLE
-    "Addresses" ADD CONSTRAINT "addresses_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
-ALTER TABLE
-    "PaymentInfo" ADD CONSTRAINT "paymentinfo_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
-ALTER TABLE
-    "Reservations" ADD CONSTRAINT "reservations_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
-ALTER TABLE
-    "Reservations" ADD CONSTRAINT "reservations_car_id_foreign" FOREIGN KEY("car_id") REFERENCES "Cars"("car_id");
-ALTER TABLE
-    "Cars" ADD CONSTRAINT "cars_location_id_foreign" FOREIGN KEY("location_id") REFERENCES "Locations"("location_id");
-ALTER TABLE
-    "Reservations" ADD CONSTRAINT "reservations_dropoff_location_foreign" FOREIGN KEY("dropoff_location") REFERENCES "Locations"("location_id");
+CREATE TABLE "Locations" (
+    "location_id" INTEGER PRIMARY KEY,
+    "location_name" VARCHAR(50),
+    "street" VARCHAR(50),
+    "city" VARCHAR(30),
+    "state" VARCHAR(20),
+    "postal_code" VARCHAR(7),
+    "phone_number" VARCHAR(15),
+    "location_image" VARCHAR(255), -- store image associated with location
+    "days_open" VARCHAR(255),
+    "open_time" TIME,
+    "close_time" TIME
+);
+
+CREATE TABLE "Cars" (
+    "car_id" INTEGER PRIMARY KEY,
+    "location_id" INTEGER,
+    "make" VARCHAR(20),
+    "model" VARCHAR(20),
+    "year" INTEGER,
+    "daily_rate" DECIMAL(10, 2), -- daily rate can include 10 digits. only 2 digits after decimal point
+    "transmission" VARCHAR(20),
+    "seats" INTEGER,
+    "MPG" INTEGER,
+    "is_a_special" BOOLEAN DEFAULT FALSE,
+    "status" VARCHAR(15) DEFAULT 'available'
+        CHECK ("status" IN ('available','unavailable')),
+    FOREIGN KEY ("location_id") REFERENCES "Locations"("location_id")
+);
+
+CREATE TABLE "Reservations" (
+    "reservation_id" INTEGER PRIMARY KEY,
+    "user_id" INTEGER,
+    "car_id" INTEGER,
+    "pickup_location" INTEGER,
+    "dropoff_location" INTEGER,
+    "payment_id" INTEGER,
+    "pick_up_date" DATE,
+    "drop_off_date" DATE,
+    "total_cost" DECIMAL(100, 2),
+    "status" VARCHAR(255) DEFAULT 'pending'
+        CHECK ("status" IN ('pending','confirmed','cancelled')),
+    FOREIGN KEY ("user_id") REFERENCES "Users"("user_id"),
+    FOREIGN KEY ("car_id") REFERENCES "Cars"("car_id"),
+    FOREIGN KEY ("pickup_location") REFERENCES "Locations"("location_id"),
+    FOREIGN KEY ("dropoff_location") REFERENCES "Locations"("location_id"),
+    FOREIGN KEY ("payment_id") REFERENCES "PaymentInfo"("payment_id")
+);
+
+ALTER TABLE "Addresses" 
+    ADD CONSTRAINT "addresses_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
+
+ALTER TABLE "PaymentInfo" 
+    ADD CONSTRAINT "paymentinfo_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
+
