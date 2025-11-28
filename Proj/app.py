@@ -1,9 +1,11 @@
 from flask import Flask, flash, redirect, render_template, request, jsonify, url_for, session
 from config import get_connection
-import datetime
+import datetime # For handling dates
+import random # For generating random reservation IDs
 
 #DB connection from config
 app = Flask(__name__)
+app.secret_key = 'super_secret_key' # Needed for flash messages
 
 @app.route('/', methods=['POST', 'GET'])
 def home():
@@ -72,7 +74,6 @@ def search_locations():
     ]
 
     # 4. Render only the partial HTML template with the filtered results
-    # You MUST create a separate template file named 'location_results_partial.html'
     return render_template('location_results.html', locations=filtered_locations)
 
 
@@ -135,46 +136,57 @@ def search_cars():
     ]
 
     # 4. Render only the partial HTML template with the filtered results
-    # You MUST create a separate template file named 'location_results_partial.html'
     return render_template('car_results.html', carsAtLocation=filtered_cars)
 
-# --- MY ACCOUNT PAGE ROUTE ---
+
+# My Account & Purchase Page
+# -------------------------------------------------------------------------
+
 @app.route('/my_account', methods=['GET'])
 def my_account():
-    # Since "no login is required" for the project, we simulate User ID 1 is logged in
+    # Simulate a logged-in user (User ID 1 based on your SQL setup)
     user_id = 1 
     
     conn = get_connection()
     cur = conn.cursor()
 
     # 1. Fetch User Information
-    cur.execute('SELECT first_name, last_name, email, phone FROM "Users" WHERE user_id = %s', (user_id,))
+    cur.execute('SELECT full_name, email, phone_number FROM "Users" WHERE user_id = %s', (user_id,))
     user_data = cur.fetchone()
     
+    user = None
     if user_data:
+        # Split full_name into first and last for the template display
+        full_name_split = user_data[0].split(' ', 1)
+        first_name = full_name_split[0]
+        last_name = full_name_split[1] if len(full_name_split) > 1 else ""
+        
         user = {
-            "first_name": user_data[0],
-            "last_name": user_data[1],
-            "email": user_data[2],
-            "phone": user_data[3]
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": user_data[1],
+            "phone": user_data[2]
         }
-    else:
-        user = None
 
-    # 2. Fetch Rental History (Joins Rentals with Cars to show what they rented)
+    # 2. Fetch Reservation History
     cur.execute("""
-        SELECT r.rental_date, c.make, c.model, r.total_cost 
-        FROM "Rentals" r
+        SELECT r.pick_up_date, c.year, c.make, c.model, r.total_cost, r.status
+        FROM "Reservations" r
         JOIN "Cars" c ON r.car_id = c.car_id
         WHERE r.user_id = %s
-        ORDER BY r.rental_date DESC
+        ORDER BY r.pick_up_date DESC
     """, (user_id,))
     
-    history_rows = cur.fetchall()
+    rows = cur.fetchall()
     
     history = [
-        {"date": row[0], "car": f"{row[1]} {row[2]}", "cost": row[3]} 
-        for row in history_rows
+        {
+            "date": row[0], 
+            "car": f"{row[1]} {row[2]} {row[3]}", 
+            "cost": row[4], 
+            "status": row[5]
+        } 
+        for row in rows
     ]
 
     cur.close()
@@ -183,15 +195,18 @@ def my_account():
     return render_template('my_account.html', user=user, history=history)
 
 
-# --- PURCHASE PAGE ROUTE ---
 @app.route('/purchase/<int:car_id>', methods=['GET', 'POST'])
 def purchase(car_id):
     conn = get_connection()
     cur = conn.cursor()
 
-    # GET: Display the car details and the purchase form
     if request.method == 'GET':
-        cur.execute('SELECT car_id, make, model, year, daily_rate, transmission, "MPG" FROM "Cars" WHERE car_id = %s', (car_id,))
+        # Fetch car details for the "Car Summary" section
+        cur.execute("""
+            SELECT car_id, make, model, year, daily_rate, transmission, "MPG", location_id 
+            FROM "Cars" 
+            WHERE car_id = %s
+        """, (car_id,))
         car_data = cur.fetchone()
         
         cur.close()
@@ -200,35 +215,45 @@ def purchase(car_id):
         if car_data:
             car = {
                 "id": car_data[0], "make": car_data[1], "model": car_data[2],
-                "year": car_data[3], "rate": car_data[4], "transmission": car_data[5], "mpg": car_data[6]
+                "year": car_data[3], "rate": car_data[4], "transmission": car_data[5], 
+                "mpg": car_data[6], "location_id": car_data[7]
             }
             return render_template('purchase.html', car=car)
         else:
             return "Car not found", 404
 
-    # POST: Process the "Payment"
     if request.method == 'POST':
-        user_id = 1  # Simulated logged-in user
-        total_cost = request.form.get('total_cost')
+        user_id = 1  # Simulated Logged-in User
         
-        # Insert the rental record
+        # Get form data
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        total_cost = request.form.get('total_cost')
+        location_id = request.form.get('location_id')
+        
+        # Generate a random reservation ID
+        res_id = random.randint(10000, 99999) 
+
         try:
+            # Insert the reservation
             cur.execute("""
-                INSERT INTO "Rentals" (user_id, car_id, total_cost)
-                VALUES (%s, %s, %s)
-            """, (user_id, car_id, total_cost))
+                INSERT INTO "Reservations" 
+                (reservation_id, user_id, car_id, pickup_location, dropoff_location, pick_up_date, drop_off_date, total_cost, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'confirmed')
+            """, (res_id, user_id, car_id, location_id, location_id, start_date, end_date, total_cost))
+            
             conn.commit()
-            flash("Booking confirmed! Thank you for your purchase.")
+            flash("Booking confirmed!")
+            return redirect(url_for('my_account'))
+            
         except Exception as e:
             conn.rollback()
-            flash("An error occurred during processing.")
             print(e)
+            return f"An error occurred: {e}"
         finally:
             cur.close()
             conn.close()
 
-        # Redirect to My Account to show the Golden Rule: "Design dialogue to yield closure"
-        return redirect(url_for('my_account'))             
 
 if __name__ == '__main__':
     app.run()
