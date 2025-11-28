@@ -1,105 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Account</title>
     <link rel="stylesheet" href="../static/css/bootstrap.css">
     <link rel="stylesheet" href="../static/css/customCss.css">
     <style>
-        /* Custom styles to match the wireframe card look */
-        .profile-card {
+        /* Custom styles to match the wireframe and theme */
+        .content-card {
             background-color: #525252;
             color: white;
             border: 1px solid #6c757d;
             border-radius: 8px;
             padding: 20px;
         }
-        .form-label { font-weight: bold; color: #ffc107; /* Bootstrap warning color for accents */ }
-        .table-dark th { color: #ffc107; }
+        .form-label { 
+            font-weight: bold; 
+            color: #ffc107; /* Consistent accent color, close to #c9b500 */
+        }
+        .table-custom thead th { 
+            color: #ffc107; 
+            border-bottom: 2px solid #ffc107;
+        }
     </style>
 </head>
 <body class="background-container">
 
     <div class="d-flex align-items-center position-fixed w-100" style="top: 0; z-index: 10;">
-        <div class="d-flex position-absolute justify-content-center w-50" style="right:0; left:0; margin:auto">
+        <div class="d-flex position-absolute justify-content-center w-75" style="right:0; left:0; margin:auto"> 
             <div class="p-3">
                 <div class="position-relative py-2 px-4 text-bg-secondary border border-secondary rounded-pill" style="--bs-bg-opacity:.55;">
                     <nav class="nav nav-pills flex-column flex-sm-row">
                         <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('home') }}">Home</a>
-                        <a class="flex-sm-fill text-sm-center nav-link active" href="#">My Account</a>
+                        <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('locations') }}">Locations</a>
+                        <a class="flex-sm-fill text-sm-center nav-link" href="#">Specials</a>
+                        <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="{{ url_for('my_account') }}">My Account</a>
                     </nav>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container" style="margin-top: 15vh;">
-        <h2 class="text-white mb-4 border-bottom border-warning pb-2" style="display:inline-block;">My Account</h2>
-        
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="profile-card h-100">
-                    <h4 class="mb-3">User Profile</h4>
-                    <form>
-                        <div class="mb-3">
-                            <label class="form-label">First Name</label>
-                            <input type="text" class="form-control" value="{{ user.first_name }}" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" class="form-control" value="{{ user.last_name }}" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email Address</label>
-                            <input type="email" class="form-control" value="{{ user.email }}" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Phone Number</label>
-                            <input type="text" class="form-control" value="{{ user.phone }}" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" value="********" readonly>
-                        </div>
-                        <button type="button" class="btn btn-primary w-100 mt-2">Edit Profile</button>
-                    </form>
-                </div>
+    <div class="container-fluid d-flex justify-content-center align-items-center" style="margin-top: 15vh; margin-bottom: 5vh">
+        <div class="d-flex border border-secondary-subtle justify-content-center align-items-center flex-column rounded-1 text-center" style="width:90%; --bs-bg-opacity:.9; background-color: #525252; color:white;">
+            
+            <div class="mx-auto" style="width:75%">
+                <h4 class="my-5 border-bottom border-secondary text-center rounded-1" style="font-size:4rem">My Account</h4>
             </div>
 
-            <div class="col-md-8">
-                <div class="profile-card h-100">
-                    <h4 class="mb-3">Rental History</h4>
-                    {% if history %}
-                    <div class="table-responsive">
-                        <table class="table table-dark table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Vehicle</th>
-                                    <th>Total Cost</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in history %}
-                                <tr>
-                                    <td>{{ item.date }}</td>
-                                    <td>{{ item.car }}</td>
-                                    <td>${{ item.cost }}</td>
-                                    <td>
-                                        <span class="badge {% if item.status == 'confirmed' %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ item.status }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-success w-75" role="alert">
+                        {{ messages[0] }}
                     </div>
-                    {% else %}
-                        <p>No rental history found.</p>
-                        <a href="{{ url_for('search_cars') }}" class="btn btn-outline-warning">Book a Car</a>
-                    {% endif %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row w-100 justify-content-center px-4 mb-5">
+                <div class="col-md-4 mb-4">
+                    <div class="content-card h-100 text-start">
+                        <h4 class="mb-3 border-bottom border-warning pb-2">User Profile</h4>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control bg-secondary text-white border-warning" value="{{ user.first_name }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control bg-secondary text-white border-warning" value="{{ user.last_name }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control bg-secondary text-white border-warning" value="{{ user.email }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="text" class="form-control bg-secondary text-white border-warning" value="{{ user.phone }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control bg-secondary text-white border-warning" value="********" readonly>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100 mt-2">Edit Profile</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="content-card h-100 text-start">
+                        <h4 class="mb-3 border-bottom border-warning pb-2">Rental History</h4>
+                        {% if history %}
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover table-custom">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Vehicle</th>
+                                        <th>Total Cost</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in history %}
+                                    <tr>
+                                        <td>{{ item.date }}</td>
+                                        <td>{{ item.car }}</td>
+                                        <td>${{ item.cost }}</td>
+                                        <td>
+                                            <span class="badge {% if item.status == 'confirmed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                {{ item.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                            <p class="text-center">No rental history found.</p>
+                            <div class="text-center">
+                                <a href="{{ url_for('locations') }}" class="btn btn-outline-warning">Book a Car</a>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
