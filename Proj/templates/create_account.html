@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent and Roam - Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --rr-bg-color: #555555; 
+            --rr-gold: #d4af37; 
+            --rr-gold-hover: #c5a028;
+            --rr-blue: #1a4a7c; 
+            --rr-blue-hover: #12365c;
+            --rr-blue-light: #3a7bd5;
+        }
+
+        body {
+            background-color: var(--rr-bg-color);
+            color: white;
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .main-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+        .main-header h1 {
+            font-weight: 700;
+            font-size: 3.8rem;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.6); 
+            margin-bottom: 0.5rem;
+            color: #f8f9fa;
+        }
+        .header-underline {
+            width: 180px;
+            height: 4px;
+            background: var(--rr-gold);
+            margin: 0 auto;
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .auth-card {
+            background-color: #ffffff;
+            color: #333;
+            border-top: 6px solid var(--rr-blue);
+            border-radius: 16px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            width: 100%;
+            max-width: 450px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .form-title {
+            text-align: center;
+            color: var(--rr-blue);
+            font-weight: 800;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .form-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: var(--rr-gold);
+            margin: 10px auto 0;
+        }
+
+        .form-floating > .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .form-floating > .form-control:focus {
+            border-color: var(--rr-blue);
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(26, 74, 124, 0.15);
+        }
+        
+        .form-floating > label { color: #6c757d; }
+
+        .btn-gold {
+            background: linear-gradient(to bottom, var(--rr-gold), #cba22e);
+            color: #1a1a1a;
+            font-weight: 700;
+            border: none;
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(to bottom, #e0bc46, var(--rr-gold));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .link-blue {
+            color: var(--rr-blue-light);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .link-blue:hover {
+            color: var(--rr-blue);
+            text-decoration: underline;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>Rent and Roam</h1>
+        <div class="header-underline"></div>
+    </header>
+
+    <div class="auth-card">
+        <h2 class="form-title">Create Account</h2>
+        
+        <!-- Flask Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} mb-4" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form id="signupForm" method="POST" action="{{ url_for('create_account') }}">
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="name" name="name" placeholder="Full Name" required>
+                <label for="name">Full Name</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                <label for="email">Email Address</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                <label for="password">Password</label>
+            </div>
+            <div class="form-floating mb-4">
+                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required>
+                <label for="confirmPassword">Confirm Password</label>
+            </div>
+
+            <button type="submit" class="btn btn-gold mb-4">Sign Up</button>
+        </form>
+
+        <div class="text-center text-muted small mt-2">
+            Already have an account? <a href="{{ url_for('login') }}" class="link-blue ms-1">Log in</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            // We still use JS to check if passwords match before submitting to Flask
+            const p1 = document.getElementById('password').value;
+            const p2 = document.getElementById('confirmPassword').value;
+
+            if (p1 !== p2) {
+                e.preventDefault(); // Stop form submission
+                alert("Passwords do not match!");
+            }
+            // If they match, the form submits normally to the server
+        });
+    </script>
+</body>
+</html>

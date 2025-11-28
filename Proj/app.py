@@ -7,6 +7,105 @@ import random # For generating random reservation IDs
 app = Flask(__name__)
 app.secret_key = 'super_secret_key' # Needed for flash messages
 
+# -------------------------------------------------------------------------
+# AUTHENTICATION ROUTES
+# -------------------------------------------------------------------------
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # Ensure your HTML inputs have name="email" and name="password"
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Check user
+        cur.execute('SELECT user_id, full_name, password_hash FROM "Users" WHERE email = %s', (email,))
+        user = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if user and check_password_hash(user[2], password):
+            session['user_id'] = user[0]
+            session['user_name'] = user[1]
+            flash('Logged in successfully!')
+            return redirect(url_for('home')) # Redirect to home page after login
+        else:
+            flash('Invalid email or password', 'error')
+            
+    return render_template('login.html')
+
+@app.route('/create_account', methods=['GET', 'POST'])
+def create_account():
+    if request.method == 'POST':
+        full_name = request.form.get('name') # Ensure HTML input has name="name"
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Hash the password
+        hashed_pw = generate_password_hash(password)
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute(
+                'INSERT INTO "Users" (full_name, email, password_hash) VALUES (%s, %s, %s) RETURNING user_id',
+                (full_name, email, hashed_pw)
+            )
+            conn.commit()
+            flash('Account created! Please log in.')
+            return redirect(url_for('login'))
+        except Exception as e:
+            conn.rollback()
+            flash('Email already exists or error occurred.', 'error')
+            print(e)
+        finally:
+            cur.close()
+            conn.close()
+            
+    return render_template('create_account.html')
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Check if user exists
+        cur.execute('SELECT user_id FROM "Users" WHERE email = %s', (email,))
+        user = cur.fetchone()
+        
+        if user:
+            # Generate a fake token for the demo
+            token = secrets.token_urlsafe(16)
+            cur.execute(
+                'INSERT INTO "PasswordResets" (user_id, reset_token, expires_at) VALUES (%s, %s, NOW() + INTERVAL \'1 hour\')',
+                (user[0], token)
+            )
+            conn.commit()
+            flash('Recovery link sent (Simulated). Check your email/console.')
+            print(f"SIMULATED EMAIL: Reset link for {email} is /reset/{token}")
+        else:
+            # Don't reveal if user exists or not for security, but flash success anyway
+            flash('If that email exists, we sent a link.')
+            
+        cur.close()
+        conn.close()
+        
+    return render_template('forgot_password.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out.')
+    return redirect(url_for('login'))
+
 @app.route('/', methods=['POST', 'GET'])
 def home():
 
