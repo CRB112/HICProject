@@ -1,11 +1,11 @@
 -- Insert Locations
-INSERT INTO locations (location_id, name, street, city, state, zip, phone, image_file, days_open, opens, closes)
+INSERT INTO "Locations" (location_id, location_name, street, city, state, postal_code, phone_number, location_image, days_open, open_time, close_time)
 VALUES
 (1, 'Main Street Rent & Roam', '123 Main St', 'Cleveland', 'Ohio', '44101', '555-123-4567', 'Cleveland.jpg', 'Mon-Fri', '05:00:00', '23:00:00'),
 (2, 'Rent & Roam Ultra', '6427 Hickory Ln', 'San Francisco', 'California', '42346', '245-123-4578', 'SanFran.jpg', 'Mon-Fri', '07:00:00', '12:00:00');
 
 -- Insert Cars
-INSERT INTO cars (car_id, location_id, make, model, year, daily_rate, transmission, seats, MPG, is_a_special, status)
+INSERT INTO "Cars" (car_id, location_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status)
 VALUES
 (101, 1, 'Toyota', 'Corolla', 2023, 50.00, 'Automatic', 5, 35, FALSE, 'available'),
 (102, 1, 'Toyota', 'Corolla', 2022, 45.00, 'Automatic', 5, 36, FALSE, 'available'),
