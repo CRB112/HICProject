@@ -31,7 +31,7 @@ def locations():
     cur = conn.cursor()
 
     # Fetch all locations
-    cur.execute("SELECT location_id, location_name, street, city, location_image, open_time, close_time, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
@@ -53,7 +53,7 @@ def search_locations():
     cur = conn.cursor()
     
     # 2. Fetch all data (or just the necessary data for the query)
-    cur.execute("SELECT location_id, location_name, street, city, location_image, open_time, close_time, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
