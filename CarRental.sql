@@ -90,6 +90,15 @@ CREATE TABLE "Reservations" (
     FOREIGN KEY ("payment_id") REFERENCES "PaymentInfo"("payment_id")
 );
 
+CREATE TABLE "Specials" (
+    special_id SERIAL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    valid_until DATE NOT NULL,
+    discount NUMERIC(5,2) NOT NULL,
+    image_path VARCHAR(255)
+);
+
 ALTER TABLE "Addresses" 
     ADD CONSTRAINT "addresses_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
 
