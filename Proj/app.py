@@ -279,5 +279,32 @@ def cancel_reservation(reservation_id):
         
     return redirect(url_for('my_account'))
 
+
+@app.route('/specials', methods=['GET'])
+def specials():
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Fetch specials from the database
+    cur.execute('SELECT title, description, valid_until, discount, image_path FROM "Specials"')
+    rows = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+
+    # Create a list of dictionaries for the template
+    specials_list = [
+        {
+            "title": r[0], 
+            "description": r[1], 
+            "valid_until": r[2], 
+            "discount": r[3], 
+            "image": r[4]
+        } 
+        for r in rows
+    ]
+
+    return render_template('specials.html', specials=specials_list)
+
 if __name__ == '__main__':
     app.run(debug=True)
