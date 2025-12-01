@@ -490,29 +490,6 @@ def modify_reservation(reservation_id):
                              payments=payments)
 
 
-@app.route('/specials', methods=['GET'])
-def specials():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT special_id, title, description, valid_until, discount, image_path FROM "Specials"  ORDER BY special_id;')
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    specials = [{
-        "id": r[0],
-        "title": r[1],
-        "description": r[2],
-        "valid_until": r[3],
-        "discount": r[4],
-        "image": r[5]
-    } for r in rows]
-    return render_template('specials.html', specials=specials)
-
-
-
-
-
-
 
 @app.route('/reserve', methods=['GET', 'POST'])
 def reserve():
