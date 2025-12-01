@@ -18,14 +18,7 @@ VALUES
 (109, 1, 'Chevrolet', 'Tahoe', 2022, 100.00, 'Automatic', 7, 18, FALSE, 'available'),
 (110, 1, 'Ford', 'Mustang', 2023, 120.00, 'Manual', 4, 20, TRUE, 'available');
 
--- ==========================================
--- POPULATE PASSWORD RESETS (For Testing)
--- ==========================================
--- This creates a fake reset token for the demo user
-INSERT INTO "PasswordResets" ("reset_id", "user_id", "reset_token", "expires_at")
-VALUES
-(1, 1, 'sample-reset-token-xyz-123', NOW() + INTERVAL '24 hours');
-=======
+
 -- Insert Users
 INSERT INTO "Users" ("user_id", "full_name", "email", "password_hash", "phone_number")
 VALUES

@@ -1,15 +1,14 @@
 import secrets
 from flask import Flask, flash, redirect, render_template, request, jsonify, url_for, session
 from config import get_connection
-import datetime # For handling dates
-import random # For generating random reservation IDs
+import datetime 
+import random 
+# Restore the actual security functions
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # DB connection from config
 app = Flask(__name__)
-app.secret_key = 'super_secret_key' # Needed for flash messages
-
-def check_password_hash(password_hash, password):
-    raise NotImplementedError
+app.secret_key = 'super_secret_key' 
 
 # -------------------------------------------------------------------------
 # AUTHENTICATION ROUTES
@@ -42,13 +41,10 @@ def login():
             
     return render_template('login.html')
 
-def generate_password_hash(password):
-    raise NotImplementedError
-
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'POST':
-        full_name = request.form.get('name') # Ensure HTML input has name="name"
+        full_name = request.form.get('name') 
         email = request.form.get('email')
         password = request.form.get('password')
         
@@ -99,7 +95,6 @@ def forgot_password():
             flash('Recovery link sent (Simulated). Check your email/console.')
             print(f"SIMULATED EMAIL: Reset link for {email} is /reset/{token}")
         else:
-            # Don't reveal if user exists or not for security, but flash success anyway
             flash('If that email exists, we sent a link.')
             
         cur.close()
@@ -113,6 +108,10 @@ def logout():
     flash('You have been logged out.')
     return redirect(url_for('login'))
 
+# -------------------------------------------------------------------------
+# MAIN APP ROUTES
+# -------------------------------------------------------------------------
+
 @app.route('/', methods=['POST', 'GET'])
 def home():
     if request.method == 'POST':
@@ -120,7 +119,6 @@ def home():
         
         if ac == "rev":
             rev = request.form.get('reviewSubmit')
-            # In a real app, save review here
             flash("Review submitted successfully!")
         
         if ac == "sch":
@@ -131,15 +129,6 @@ def home():
 
     return render_template('index.html')
 
-# User Authentication Pages
-# -------------------------------------------------------------------------
-@app.route('/login')
-def login():
-    return render_template('login.html')
-
-@app.route('/create_account')
-def create_account():
-    return render_template('create_account.html')
 
 # Locations & Cars Pages
 # -------------------------------------------------------------------------
@@ -151,8 +140,7 @@ def locations():
     conn = get_connection()
     cur = conn.cursor()
 
-    # FIX: Updated column names to match data.sql (name, street, city, image_file, etc.)
-    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, location_name, street, city, location_image, open_time, close_time, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
@@ -167,14 +155,12 @@ def locations():
 
 @app.route('/search_locations', methods=['GET'])
 def search_locations():
-    # 1. Get the search term from the AJAX request
     query = request.args.get('q', '').lower()
     
     conn = get_connection()
     cur = conn.cursor()
     
-    # FIX: Updated column names to match data.sql
-    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, location_name, street, city, location_image, open_time, close_time, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
@@ -185,13 +171,11 @@ def search_locations():
         for r in rows
     ]
 
-    # 3. Filter the data based on the query (case-insensitive)
     filtered_locations = [
         loc for loc in all_locations
         if query in loc['name'].lower() or query in loc['city'].lower() or query in loc['street'].lower()
     ]
 
-    # 4. Render only the partial HTML template with the filtered results
     return render_template('location_results.html', locations=filtered_locations)
 
 
@@ -219,7 +203,6 @@ def cars_at_location(location_id):
 
     return render_template("cars.html", carsAtLocation=carsAtLocation, location_id=location_id) 
 
-# Search Cars within a Location
 @app.route('/search_cars', methods=['GET'])
 def search_cars():
     query = request.args.get('q', '').lower()
@@ -228,7 +211,6 @@ def search_cars():
     conn = get_connection()
     cur = conn.cursor()
     
-    # If location_id is provided, filter by it, otherwise search all (optional safety check)
     if location_id:
         cur.execute("""
             SELECT car_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status 
@@ -236,7 +218,6 @@ def search_cars():
             WHERE location_id = %s;
         """, (location_id,))
     else:
-        # Fallback if no location selected (prevents crash)
         cur.execute("""
             SELECT car_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status 
             FROM "Cars";
@@ -265,13 +246,16 @@ def search_cars():
 
 @app.route('/my_account', methods=['GET'])
 def my_account():
-    # Simulate a logged-in user (User ID 1 based on our SQL setup)
-    user_id = 1 
+    # Use Session instead of hardcoded User ID
+    if 'user_id' not in session:
+        flash("Please log in to view your account.")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
     
     conn = get_connection()
     cur = conn.cursor()
 
-    # 1. Fetch User Information
     cur.execute('SELECT full_name, email, phone_number FROM "Users" WHERE user_id = %s', (user_id,))
     user_data = cur.fetchone()
     
@@ -288,7 +272,6 @@ def my_account():
             "phone": user_data[2]
         }
 
-    # 2. Fetch Reservation History (Added reservation_id to select for cancellation)
     cur.execute("""
         SELECT r.reservation_id, r.pick_up_date, c.year, c.make, c.model, r.total_cost, r.status
         FROM "Reservations" r
@@ -320,6 +303,10 @@ def my_account():
 
 @app.route('/purchase/<int:car_id>', methods=['GET', 'POST'])
 def purchase(car_id):
+    if 'user_id' not in session:
+        flash("Please log in to reserve a car.")
+        return redirect(url_for('login'))
+
     conn = get_connection()
     cur = conn.cursor()
 
@@ -345,7 +332,7 @@ def purchase(car_id):
             return "Car not found", 404
 
     if request.method == 'POST':
-        user_id = 1  # Simulated Logged-in User
+        user_id = session['user_id']
         
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
@@ -353,12 +340,9 @@ def purchase(car_id):
         location_id = request.form.get('location_id')
         
         res_id = random.randint(10000, 99999) 
-        
-        # FIX: Hardcoded payment_id to 1 (Matches John Doe in our data.sql)
-        payment_id = 1 
+        payment_id = 1 # Placeholder for payment ID
 
         try:
-            # Insert reservation into the database
             cur.execute("""
                 INSERT INTO "Reservations" 
                 (reservation_id, user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, status)
@@ -377,7 +361,6 @@ def purchase(car_id):
             cur.close()
             conn.close()
 
-# NEW ROUTE: Allow user to cancel reservation (Golden Rule: Easy Reversal of Actions)
 @app.route('/cancel_reservation/<int:reservation_id>', methods=['POST'])
 def cancel_reservation(reservation_id):
     conn = get_connection()
@@ -406,14 +389,12 @@ def specials():
     conn = get_connection()
     cur = conn.cursor()
     
-    # Fetch specials from the database
     cur.execute('SELECT title, description, valid_until, discount, image_path FROM "Specials"')
     rows = cur.fetchall()
     
     cur.close()
     conn.close()
 
-    # Create a list of dictionaries for the template
     specials_list = [
         {
             "title": r[0], 
