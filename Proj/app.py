@@ -6,20 +6,9 @@ app = Flask(__name__)
 
 @app.route('/', methods=['POST', 'GET'])
 def home():
-
     if request.method == 'POST':
-
-        ac = request.form.get('ac')
-        
-        if ac == "rev":
-            rev = request.form.get('reviewSubmit')
-        
-        if ac == "sch":
-            l = request.form.get('l')
-            return redirect(url_for('locations', l = l))
-
-        return render_template('index.html')    
-
+        rev = request.form.get('reviewSubmit')
+        return render_template('index.html')
     return render_template('index.html')
 
 
@@ -31,7 +20,9 @@ def locations():
     cur = conn.cursor()
 
     # Fetch all locations
+
     cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
+
     rows = cur.fetchall()
 
     cur.close()
@@ -53,7 +44,9 @@ def search_locations():
     cur = conn.cursor()
     
     # 2. Fetch all data (or just the necessary data for the query)
+
     cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
+
     rows = cur.fetchall()
 
     cur.close()
@@ -73,7 +66,6 @@ def search_locations():
     # 4. Render only the partial HTML template with the filtered results
     # You MUST create a separate template file named 'location_results_partial.html'
     return render_template('location_results.html', locations=filtered_locations)
-
 
 @app.route('/locations/<int:location_id>')
 def cars_at_location(location_id):
