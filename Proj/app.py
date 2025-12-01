@@ -1,4 +1,4 @@
-`import secrets
+import secrets
 from flask import Flask, flash, redirect, render_template, request, jsonify, url_for, session
 from config import get_connection
 import datetime 

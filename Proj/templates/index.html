@@ -8,47 +8,47 @@
 </head>
 <body class="background-container">
     <!-- position of NavBar -->
-    <div class="d-flex align-items-center position-fixed w-100" style="top: 0; z-index: 10;">
-        
-        <!--Dropdown-->
-        <div class="accordion" id="accordionExample" style="margin-left:10px">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                        Profile
+
+    <div class="position-fixed w-100 d-flex justify-content-between align-items-center" style="top: 6px; z-index: 10; padding: 0 15px;">
+        <!-- Accordion Container (Left) -->
+        {% if session.get('user_name') %}
+        <div class="accordion" id="accordionExample" style="width: 200px; position: relative;">
+            <div class="accordion-item" style="background-color: var(--bs-primary);">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button d-flex justify-content-between align-items-center bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne" style="border: none; padding: 12px;">
+                        {{ session.get('user_name') }}
+                        <i class="bi bi-chevron-down"></i>
                     </button>
                 </h2>
-                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                    <div class="accordion-body" style="width:100px">
-                        <strong>This is the first item’s accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It’s also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                <div id="collapseOne" class="accordion-collapse collapse bg-primary" data-bs-parent="#accordionExample" style="padding: 12px; border-radius: 5px; position: absolute; top: 100%; left: 0; width: 100%; z-index: 11;">
+                    <div class="accordion-body" style="padding: 0;">
+                        <button class="w-100 bg-transparent text-white" style="border: none; margin: 0;" onclick="window.location.href='{{ url_for('my_account') }}'">My Account</button>
+                        <button class="w-100 bg-transparent text-white" style="border: none; margin: 0;" onclick="window.location.href='{{ url_for('logout') }}'">Logout</button>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Navbar Container: Centered -->
-        <div class="d-flex position-absolute justify-content-center w-50" style="right:0; left:0; margin:auto"> <!-- Adjust width as needed -->
-            <div class="p-3">
-                <div class="position-relative py-2 px-4 text-bg-secondary border border-secondary rounded-pill" style="--bs-bg-opacity:.55;">
-                    <nav class="nav nav-pills flex-column flex-sm-row">
-                        <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
-                        <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('locations') }}">Locations</a>
-                        <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('specials') }}">Specials</a>
-
-                    </nav>
-                </div>
-            </div>
+        {% else %}
+        <div style="width: 300px;">
+            <button class="btn btn-primary position-relative" onclick="window.location.href='{{ url_for('login') }}'">Log In</button>
         </div>
+        {% endif %}
 
-        <!-- Search Bar Container: Pushed to the Right -->
-        <div class="d-flex p-3 justify-content-end" style="margin-right:0; margin-left:auto; position: relative; z-index: 20;">
-            <div class="d-flex align-items-center me-3">
-                <a href="{{ url_for('login') }}" class="btn btn-primary me-2">Login</a>
-                <a href="{{ url_for('create_account') }}" class="btn btn-primary">Sign Up</a>
-                <a href="{{ url_for('purchase', car_id=101) }}" class="btn btn-primary">Buy</a>
-            </div>
-            <form class="d-flex" method = "POST" role="search">
+
+        <!-- Navbar Container (Center) -->
+        <div class="position-relative py-2 px-4 text-bg-secondary border border-secondary rounded-pill" style="--bs-bg-opacity: .55;">
+            <nav class="nav nav-pills flex-column flex-sm-row">
+                <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
+                <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('locations') }}">Locations</a>
+                <a class="flex-sm-fill text-sm-center nav-link" href="{{ url_for('specials') }}">Specials</a>
+            </nav>
+        </div>
+        
+        <!-- Search Bar Container (Right) -->
+        <div>
+            <form class="d-flex" method="POST" role="search">
                 <input type="hidden" name="ac" value="sch">
-                <input class="form-control me-2 bg-dark-subtle" name="l" style="--bs-bg-opacity:.55;" type="search" placeholder="Search By Locations" aria-label="Search"/>
+                <input class="form-control me-2 bg-dark-subtle" name="l" style="--bs-bg-opacity: .55;" type="search" placeholder="Search By Locations" aria-label="Search"/>
                 <button class="btn btn-primary" type="submit">Search</button>
             </form>
         </div>
