@@ -148,7 +148,7 @@ def locations():
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT location_id, name, street, city, image, open_time, close_time, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
@@ -170,7 +170,7 @@ def search_locations():
     conn = get_connection()
     cur = conn.cursor()
     
-    cur.execute("SELECT location_id, name, street, city, image, open_time, close_time, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
