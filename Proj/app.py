@@ -141,7 +141,7 @@ def locations():
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT location_id, name, street, city, image, open_time, close_time, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
@@ -163,7 +163,7 @@ def search_locations():
     conn = get_connection()
     cur = conn.cursor()
     
-    cur.execute("SELECT location_id, name, street, city, image, open_time, close_time, days_open FROM \"Locations\";")
+    cur.execute("SELECT location_id, name, street, city, image_file, opens, closes, days_open FROM \"Locations\";")
     rows = cur.fetchall()
 
     cur.close()
@@ -342,15 +342,23 @@ def my_account():
 # -------------------------------------------------------------------------
 @app.route('/cancel_reservation/<int:reservation_id>', methods=['POST'])
 def cancel_reservation(reservation_id):
+    # 1. Check if user is logged in
+    if 'user_id' not in session:
+        flash("Please log in.")
+        return redirect(url_for('login'))
+
+    # 2. Get the real user ID from the session
+    user_id = session['user_id']
+
     conn = get_connection()
     cur = conn.cursor()
     
-    # Golden Rule: Permit easy reversal of actions 
+    # 3. Use user_id instead of CURRENT_USER_ID
     cur.execute("""
         UPDATE "Reservations" 
         SET status = 'cancelled' 
         WHERE reservation_id = %s AND user_id = %s
-    """, (reservation_id, CURRENT_USER_ID))
+    """, (reservation_id, user_id))
     
     conn.commit()
     cur.close()
