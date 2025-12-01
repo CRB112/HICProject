@@ -174,19 +174,18 @@ def purchase(car_id):
         location_id = request.form['location_id']
         
         # 2. Insert into Reservations Table
-        # Note: We are using a dummy payment_id (1) for now to satisfy FK constraints 
-        # unless you want to implement the full PaymentInfo insertion logic here.
+        # Note: We are using a dummy payment_id (1) and user_id (1)
         insert_query = """
             INSERT INTO "Reservations" 
             (user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'confirmed')
         """
         cur.execute(insert_query, (
-            CURRENT_USER_ID, 
+            1, # Hardcoded User ID (Change this when you have login working)
             car_id, 
             location_id, 
-            location_id, # Assuming dropoff is same as pickup for now
-            1, # Hardcoded Payment ID (John Doe's existing card)
+            location_id, 
+            1, # Hardcoded Payment ID
             start_date, 
             end_date, 
             total_cost
@@ -198,6 +197,40 @@ def purchase(car_id):
         
         flash("Reservation confirmed successfully!")
         return redirect(url_for('my_account'))
+
+    # --- GET Request: Fetch Car Details ---
+    
+    # We select specific columns so we know exactly which index is which
+    cur.execute("""
+        SELECT car_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status, location_id 
+        FROM "Cars" 
+        WHERE car_id = %s
+    """, (car_id,))
+    
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    # Convert the Tuple (row) into a Dictionary (car)
+    # This fixes the "tuple has no attribute 'model'" error
+    if row:
+        car = {
+            "id": row[0],
+            "make": row[1],
+            "model": row[2],
+            "year": row[3],
+            "daily_rate": row[4],
+            "transmission": row[5],
+            "seats": row[6],
+            "MPG": row[7],
+            "special": row[8],
+            "status": row[9],
+            "location_id": row[10]
+        }
+    else:
+        return "Car not found", 404
+    
+    return render_template('purchase.html', car=car)
 
     # GET Request: Fetch Car Details
     cur.execute('SELECT * FROM "Cars" WHERE car_id = %s', (car_id,))
