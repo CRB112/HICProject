@@ -588,7 +588,7 @@ def reserve():
                 return redirect(url_for('reserve'))
 
         # GET request: show the reservation form
-        return render_template('reserve.html')  # ✅ Must return something
+        return render_template('reserve.html')  # Must return something
 
     except Exception as e:
         conn.rollback()
@@ -621,7 +621,7 @@ def cancel_reservation(reservation_id):
         UPDATE "Reservations" 
         SET status = 'cancelled' 
         WHERE reservation_id = %s AND user_id = %s
-    """, (reservation_id, CURRENT_USER_ID))
+    """, (reservation_id, session.get('user_id')))
     
     conn.commit()
     cur.close()
