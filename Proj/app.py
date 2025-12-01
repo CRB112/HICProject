@@ -109,13 +109,8 @@ def logout():
     return redirect(url_for('login'))
 
 # -------------------------------------------------------------------------
-# MAIN APP ROUTES
+# MAIN ROUTES
 # -------------------------------------------------------------------------
-
-CURRENT_USER_ID = 2 # Hardcoded user ID for demo purposes, should chage once login logic is implemented
-# -------------------------------------------------------------------------
-
-
 # Home Page
 # -------------------------------------------------------------------------
 @app.route('/', methods=['POST', 'GET'])
@@ -396,6 +391,8 @@ def purchase(car_id):
             cur.close()
             conn.close()
 
+# Cancel Reservation
+# -------------------------------------------------------------------------
 @app.route('/cancel_reservation/<int:reservation_id>', methods=['POST'])
 def cancel_reservation(reservation_id):
     conn = get_connection()
@@ -415,7 +412,7 @@ def cancel_reservation(reservation_id):
     flash("Reservation cancelled.")
     return redirect(url_for('my_account'))
 
-
+# Special Offers Page
 @app.route('/specials', methods=['GET'])
 def specials():
     conn = get_connection()
