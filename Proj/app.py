@@ -25,6 +25,8 @@ def home():
 
     return render_template('index.html')
 
+# User Authentication Pages
+# -------------------------------------------------------------------------
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -33,6 +35,8 @@ def login():
 def create_account():
     return render_template('create_account.html')
 
+# Locations & Cars Pages
+# -------------------------------------------------------------------------
 
 @app.route('/locations', methods=['GET'])
 def locations():
@@ -109,6 +113,7 @@ def cars_at_location(location_id):
 
     return render_template("cars.html", carsAtLocation=carsAtLocation, location_id=location_id) 
 
+# Search Cars within a Location
 @app.route('/search_cars', methods=['GET'])
 def search_cars():
     query = request.args.get('q', '').lower()
