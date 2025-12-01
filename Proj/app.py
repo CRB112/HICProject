@@ -25,6 +25,14 @@ def home():
 
     return render_template('index.html')
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/create_account')
+def create_account():
+    return render_template('create_account.html')
+
 
 @app.route('/locations', methods=['GET'])
 def locations():
