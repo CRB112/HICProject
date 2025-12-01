@@ -154,6 +154,8 @@ def locations():
 
     return render_template('locations.html', locations=locations, l=l)
 
+# Search Locations
+# -------------------------------------------------------------------------
 @app.route('/search_locations', methods=['GET'])
 def search_locations():
     query = request.args.get('q', '').lower()
@@ -179,7 +181,8 @@ def search_locations():
 
     return render_template('location_results.html', locations=filtered_locations)
 
-
+# Cars at Location
+# -------------------------------------------------------------------------
 @app.route('/locations/<int:location_id>')
 def cars_at_location(location_id):
     conn = get_connection()
@@ -215,7 +218,8 @@ def cars_at_location(location_id):
 
     return render_template("cars.html", carsAtLocation=carsAtLocation, location_id=location_id)
 
-
+# Search Cars
+# -------------------------------------------------------------------------
 @app.route('/search_cars', methods=['GET'])
 def search_cars():
     query = request.args.get('q', '').lower()
