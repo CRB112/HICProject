@@ -334,9 +334,9 @@ def my_account():
 # -------------------------------------------------------------------------
 @app.route('/purchase/<int:car_id>', methods=['GET', 'POST'])
 def purchase(car_id):
-    if 'user_id' not in session:
-        flash("Please log in to reserve a car.")
-        return redirect(url_for('login'))
+    # if 'user_id' not in session:
+    #     flash("Please log in to reserve a car.")
+    #     return redirect(url_for('login'))
 
     conn = get_connection()
     cur = conn.cursor()
@@ -370,7 +370,7 @@ def purchase(car_id):
 
     if request.method == 'POST':
         # ... (Your POST logic is fine, keep it as is) ...
-        user_id = session['user_id']
+        user_id = 1 #session['user_id']
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         total_cost = request.form.get('total_cost')
@@ -520,68 +520,88 @@ def modify_reservation(reservation_id):
 def reserve():
     conn = get_connection()
     cur = conn.cursor()
-    if request.method == 'POST':
+
+    try:
+        if request.method == 'POST':
+            try:
+                # Parse inputs
+                user_id = int(request.form.get('user_id'))
+                car_id = int(request.form.get('car_id'))
+                pickup_location = int(request.form.get('pickup_location'))
+                dropoff_location = int(request.form.get('dropoff_location'))
+                payment_id_raw = request.form.get('payment_id')
+                payment_id = int(payment_id_raw) if payment_id_raw else None
+                pick_up_date = request.form.get('pick_up_date')
+                drop_off_date = request.form.get('drop_off_date')
+
+                # Basic validation
+                if not pick_up_date or not drop_off_date:
+                    flash('Pick-up and drop-off dates are required.', 'danger')
+                    return redirect(url_for('reserve'))
+
+                d1 = datetime.fromisoformat(pick_up_date)
+                d2 = datetime.fromisoformat(drop_off_date)
+                days = (d2 - d1).days
+                if days < 0:
+                    flash('Drop-off must be after pick-up date.', 'danger')
+                    return redirect(url_for('reserve'))
+                if days == 0:
+                    days = 1
+
+                # Check car exists and is available
+                cur.execute("SELECT daily_rate, status FROM cars WHERE car_id = %s", (car_id,))
+                car_row = cur.fetchone()
+                if not car_row:
+                    flash('Selected car not found.', 'danger')
+                    return redirect(url_for('reserve'))
+                daily_rate, status = car_row
+                if status != 'available':
+                    flash('Selected car is not available.', 'danger')
+                    return redirect(url_for('reserve'))
+
+                total_cost = float(daily_rate) * days
+
+                # Insert reservation
+                cur.execute("""
+                    INSERT INTO reservations (user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING reservation_id;
+                """, (user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, 'pending'))
+                res_id = cur.fetchone()[0]
+
+                # Optional: mark car unavailable
+                cur.execute("UPDATE cars SET status = %s WHERE car_id = %s", ('unavailable', car_id))
+
+                conn.commit()
+                flash(f'Reservation {res_id} created. Total: ${total_cost:.2f}', 'success')
+                return redirect(url_for('manage_reservations'))
+
+            except Exception as e:
+                conn.rollback()
+                print('Error creating reservation:', e)
+                flash('There was an error creating your reservation. Please try again.', 'danger')
+                return redirect(url_for('reserve'))
+
+        # GET request: show the reservation form
+        return render_template('reserve.html')  # ✅ Must return something
+
+    except Exception as e:
+        conn.rollback()
+        print('Unexpected error in reserve:', e)
+        flash('An unexpected error occurred. Please try again.', 'danger')
+        return redirect(url_for('reserve'))
+
+    finally:
+        # Close cursor and connection
         try:
-            # Parse inputs
-            user_id = int(request.form.get('user_id'))
-            car_id = int(request.form.get('car_id'))
-            pickup_location = int(request.form.get('pickup_location'))
-            dropoff_location = int(request.form.get('dropoff_location'))
-            payment_id_raw = request.form.get('payment_id')
-            payment_id = int(payment_id_raw) if payment_id_raw else None
-            pick_up_date = request.form.get('pick_up_date')
-            drop_off_date = request.form.get('drop_off_date')
-
-            # Basic validation
-            if not pick_up_date or not drop_off_date:
-                flash('Pick-up and drop-off dates are required.', 'danger')
-                return redirect(url_for('reserve'))
-
-            d1 = datetime.fromisoformat(pick_up_date)
-            d2 = datetime.fromisoformat(drop_off_date)
-            days = (d2 - d1).days
-            if days < 0:
-                flash('Drop-off must be after pick-up date.', 'danger')
-                return redirect(url_for('reserve'))
-            if days == 0:
-                days = 1
-
-            # Check car exists and is available, and get rate
-            cur.execute("SELECT daily_rate, status FROM cars WHERE car_id = %s", (car_id,))
-            car_row = cur.fetchone()
-            if not car_row:
-                flash('Selected car not found.', 'danger')
-                return redirect(url_for('reserve'))
-            daily_rate, status = car_row
-            if status != 'available':
-                flash('Selected car is not available.', 'danger')
-                return redirect(url_for('reserve'))
-
-            total_cost = float(daily_rate) * days
-
-            # Insert reservation
-            cur.execute("""
-                INSERT INTO reservations (user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING reservation_id;
-            """, (user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, 'pending'))
-            res_id = cur.fetchone()[0]
-
-            # Optional: mark car unavailable
-            cur.execute("UPDATE cars SET status = %s WHERE car_id = %s", ('unavailable', car_id))
-
-            conn.commit()
-            flash(f'Reservation {res_id} created. Total: ${total_cost:.2f}', 'success')
-            return redirect(url_for('manage_reservations'))
-
-        except Exception as e:
-            conn.rollback()
-            print('Error creating reservation:', e)
-            flash('There was an error creating your reservation. Please try again.', 'danger')
-            return redirect(url_for('reserve'))
-        finally:
             cur.close()
+        except:
+            pass
+        try:
             conn.close()
+        except:
+            pass
+
     
 
 # Cancel Reservation
@@ -637,6 +657,33 @@ def specials():
     ]
 
     return render_template('specials.html', specials=specials_list)
+
+@app.route('/manage_reservations', methods=['GET'])
+def manage_reservations():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT reservation_id, reservation_id as reservation_code, pick_up_date, drop_off_date, pickup_location, dropoff_location, car_id, total_cost, status
+        FROM \"Reservations\"
+        ORDER BY reservation_id DESC;
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    reservations = [{
+        "id": r[0],
+        "code": r[1],
+        "pick_up_date": r[2],
+        "drop_off_date": r[3],
+        "pickup_location": r[4],
+        "dropoff_location": r[5],
+        "car_id": r[6],
+        "total_cost": r[7],
+        "status": r[8]
+    } for r in rows]
+
+    return render_template('manage_reservations.html', reservations=reservations)
 
 if __name__ == '__main__':
     app.run(debug=True)
