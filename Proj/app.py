@@ -340,7 +340,7 @@ def purchase(car_id):
 # -------------------------------------------------------------------------
 @app.route('/my_account', methods=['GET', 'POST'])
 def my_account():
-    # Use Session instead of hardcoded User ID
+    # 1. Check Login
     if 'user_id' not in session:
         flash("Please log in to view your account.")
         return redirect(url_for('login'))
@@ -350,36 +350,55 @@ def my_account():
     conn = get_connection()
     cur = conn.cursor()
 
+    # 2. Get User Details
     cur.execute('SELECT full_name, email, phone_number FROM "Users" WHERE user_id = %s', (user_id,))
-    user_data = cur.fetchone()
+    user_data = cur.fetchone() # We name this 'user_data'
     
-    if user_row:
-        # FIX: Access tuple by index (0, 1, 2) instead of string keys
-        # user_row[0] is full_name, user_row[1] is email, etc.
-        full_name_text = user_row[0] if user_row[0] else " "
+    user_formatted = {}
+    
+    # FIX: Changed 'user_row' to 'user_data' to match the variable above
+    if user_data:
+        full_name_text = user_data[0] if user_data[0] else " "
         names = full_name_text.split(' ', 1)
         
         user_formatted = {
             'first_name': names[0],
             'last_name': names[1] if len(names) > 1 else '',
-            'email': user_row[1],
-            'phone': user_row[2]
+            'email': user_data[1],
+            'phone': user_data[2]
         }
 
-    cur.execute("""
+    # 3. Get History
+    # FIX: Assign the string to a variable first, then execute
+    history_query = """
         SELECT r.reservation_id, r.pick_up_date, c.year, c.make, c.model, r.total_cost, r.status
         FROM "Reservations" r
         JOIN "Cars" c ON r.car_id = c.car_id
         WHERE r.user_id = %s
         ORDER BY r.pick_up_date DESC
     """
-    cur.execute(history_query, (CURRENT_USER_ID,))
+    
+    # FIX: Use 'user_id' (from session), not 'CURRENT_USER_ID'
+    cur.execute(history_query, (user_id,))
     history_rows = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    return render_template('my_account.html', user=user, history=history)
+    # FIX: Convert rows to dictionaries so HTML doesn't break
+    history = []
+    for row in history_rows:
+        history.append({
+            "reservation_id": row[0],
+            "pick_up_date": row[1],
+            "car_name": f"{row[2]} {row[3]} {row[4]}",
+            "total_cost": row[5],
+            "status": row[6]
+        })
+
+    # FIX: Pass 'user_formatted', not 'user' (which didn't exist)
+    return render_template('my_account.html', user=user_formatted, history=history)
+
 
 # Purchase Page
 # -------------------------------------------------------------------------
