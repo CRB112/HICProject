@@ -167,21 +167,18 @@ def purchase(car_id):
     cur = conn.cursor()
 
     if request.method == 'POST':
-        # 1. Extract Form Data
         start_date = request.form['start_date']
         end_date = request.form['end_date']
         total_cost = request.form['total_cost']
         location_id = request.form['location_id']
         
-        # 2. Insert into Reservations Table
-        # Note: We are using a dummy payment_id (1) and user_id (1)
         insert_query = """
             INSERT INTO "Reservations" 
             (user_id, car_id, pickup_location, dropoff_location, payment_id, pick_up_date, drop_off_date, total_cost, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'confirmed')
         """
         cur.execute(insert_query, (
-            1, # Hardcoded User ID (Change this when you have login working)
+            CURRENT_USER_ID, 
             car_id, 
             location_id, 
             location_id, 
@@ -199,8 +196,6 @@ def purchase(car_id):
         return redirect(url_for('my_account'))
 
     # --- GET Request: Fetch Car Details ---
-    
-    # We select specific columns so we know exactly which index is which
     cur.execute("""
         SELECT car_id, make, model, year, daily_rate, transmission, seats, "MPG", is_a_special, status, location_id 
         FROM "Cars" 
@@ -211,11 +206,10 @@ def purchase(car_id):
     cur.close()
     conn.close()
     
-    # Convert the Tuple (row) into a Dictionary (car)
-    # This fixes the "tuple has no attribute 'model'" error
     if row:
+        # FIX: Changed "id" to "car_id" to match your HTML template
         car = {
-            "id": row[0],
+            "car_id": row[0], 
             "make": row[1],
             "model": row[2],
             "year": row[3],
@@ -229,15 +223,6 @@ def purchase(car_id):
         }
     else:
         return "Car not found", 404
-    
-    return render_template('purchase.html', car=car)
-
-    # GET Request: Fetch Car Details
-    cur.execute('SELECT * FROM "Cars" WHERE car_id = %s', (car_id,))
-    car = cur.fetchone()
-    
-    cur.close()
-    conn.close()
     
     return render_template('purchase.html', car=car)
 
@@ -255,7 +240,6 @@ def my_account():
         email = request.form.get('email')
         phone = request.form.get('phone')
         
-        # Reconstruct full name for DB
         full_name = f"{first_name} {last_name}"
         
         cur.execute("""
@@ -269,25 +253,32 @@ def my_account():
         return redirect(url_for('my_account'))
 
     # GET: Fetch User & History
-    # 1. Get User Details
-    cur.execute('SELECT * FROM "Users" WHERE user_id = %s', (CURRENT_USER_ID,))
-    user_data = cur.fetchone()
     
-    # Split full_name for the template (since template uses first_name/last_name)
-    names = user_data['full_name'].split(' ', 1)
-    user_formatted = {
-        'first_name': names[0],
-        'last_name': names[1] if len(names) > 1 else '',
-        'email': user_data['email'],
-        'phone': user_data['phone_number']
-    }
+    # 1. Get User Details (Select specific columns so we know the order)
+    cur.execute('SELECT full_name, email, phone_number FROM "Users" WHERE user_id = %s', (CURRENT_USER_ID,))
+    user_row = cur.fetchone()
+    
+    user_formatted = {}
+    
+    if user_row:
+        # FIX: Access tuple by index (0, 1, 2) instead of string keys
+        # user_row[0] is full_name, user_row[1] is email, etc.
+        full_name_text = user_row[0] if user_row[0] else " "
+        names = full_name_text.split(' ', 1)
+        
+        user_formatted = {
+            'first_name': names[0],
+            'last_name': names[1] if len(names) > 1 else '',
+            'email': user_row[1],
+            'phone': user_row[2]
+        }
 
-    # 2. Get Reservation History (Join with Cars to get Model Name)
+    # 2. Get Reservation History
     history_query = """
-        SELECT r.reservation_id as id, 
-               CONCAT(c.year, ' ', c.make, ' ', c.model) as car,
-               r.pick_up_date as date,
-               r.total_cost as cost,
+        SELECT r.reservation_id, 
+               CONCAT(c.year, ' ', c.make, ' ', c.model),
+               r.pick_up_date,
+               r.total_cost,
                r.status
         FROM "Reservations" r
         JOIN "Cars" c ON r.car_id = c.car_id
@@ -295,10 +286,22 @@ def my_account():
         ORDER BY r.pick_up_date DESC
     """
     cur.execute(history_query, (CURRENT_USER_ID,))
-    history = cur.fetchall()
+    history_rows = cur.fetchall()
 
     cur.close()
     conn.close()
+
+    # FIX: Convert the tuple history rows into dictionaries
+    # This prevents errors in the HTML when doing {{ reservation.car }}
+    history = []
+    for row in history_rows:
+        history.append({
+            "id": row[0],
+            "car": row[1],
+            "date": row[2],
+            "cost": row[3],
+            "status": row[4]
+        })
     
     return render_template('my_account.html', user=user_formatted, history=history)
 
