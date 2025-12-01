@@ -115,20 +115,29 @@ def logout():
 # -------------------------------------------------------------------------
 @app.route('/', methods=['POST', 'GET'])
 def home():
+    cur = get_connection().cursor()
+
+    if request.method == 'GET':
+        sql = "SELECT review_id, user_id, full_name, review FROM \"Reviews\" LIMIT 5"
+        cur.execute(sql)
+        rev = cur.fetchall()
+
     if request.method == 'POST':
         ac = request.form.get('ac')
         
         if ac == "rev":
             rev = request.form.get('reviewSubmit')
-            flash("Review submitted successfully!")
+            sql = "INSERT INTO Reviews(user_id, full_name, review) VALUES (%s, %s, %s)"
+            cur.execute(sql, (session.get('user_id'), session.get('user_name'), rev,))
+
         
         if ac == "sch":
             l = request.form.get('l')
             return redirect(url_for('locations', l = l))
 
-        return render_template('index.html')    
+        return render_template('index.html', rev=rev)    
 
-    return render_template('index.html')
+    return render_template('index.html', rev=rev)
 
 
 # Locations & Cars Pages

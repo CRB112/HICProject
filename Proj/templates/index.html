@@ -153,14 +153,17 @@
                     <h4 class="fs-1">See What People Think</h4>
                     <div id="reviewsCarousel" class="carousel slide justify-content-center d-flex" data-bs-ride="carousel">
                         <div class="carousel-inner w-50">
-                            <div class="carousel-item active">
-                                <div class="p-4 bg-primary rounded">
-                                    <p>Placeholder</p>
-                                    <h6>- Placeholder</h6>
+                            {% for review in rev %}
+                                <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                                    <div class="p-4 bg-primary rounded">
+                                        <p>{{ review[3] }}</p> <!-- review[3] is the review text -->
+                                        <h6>- {{ review[2] }}</h6> <!-- review[2] is the full name -->
+                                    </div>
                                 </div>
-                            </div>
+                            {% endfor %}
                         </div>
                     </div>
+                    
                     
                     <div>
                         <h4 class="fs-2 mb-2">Have Thoughts?</h4>
@@ -173,10 +176,15 @@
                     <div class="modal-dialog">
                         <div class="modal-content" style="background-color:#525252; color:white;">
                             <div class="modal-header" style="border-bottom: 2px solid #c9b500;">
+                                {% if session.get('user_id') %}
                                 <h1 class="modal-title fs-5" id="reviewModalLabel">Leave a Review</h1>
+                                {% else %}
+                                <h1 class="modal-title fs-5" id="reviewModalLabel">Please Log In First</h1>
+                                {% endif %}
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body" style="border-bottom: 2px solid #c9b500;">
+                                {% if session.get('user_id') %}
                                 <form class="form d-flex justify-content-start" action="/" method="POST" id="reviewSubmitForm">
                                     <input type="hidden" name="ac" value="rev">
                                     <textarea required class="my-textarea w-100" 
@@ -184,14 +192,22 @@
                                             style="height: 20vmax; background-color:#525252; color:white;" 
                                             placeholder="What would you like to say?"></textarea>
                                 </form>
+                                {% else %}
+                                <button class="btn btn-primary" onclick="window.location.href='{{ url_for('my_account') }}'">Log In</button>
+                                {% endif %}
                             </div>
                             <div class="modal-footer" style="border:none">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                {% if session.get('user_id') %}
                                 <button class="btn btn-primary" type="submit" form="reviewSubmitForm">Submit</button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
+
+
+
                 
 
 
