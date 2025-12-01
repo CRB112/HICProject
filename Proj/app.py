@@ -319,7 +319,7 @@ def my_account():
     
     # FIX: Use 'user_id' (from session), not 'CURRENT_USER_ID'
     cur.execute(history_query, (user_id,))
-    cur.execute(history_query, (CURRENT_USER_ID,))
+    # cur.execute(history_query, (CURRENT_USER_ID,))
     history_rows = cur.fetchall()
 
     cur.close()
